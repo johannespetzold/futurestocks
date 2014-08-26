@@ -45,6 +45,11 @@ class PricePoint
 
     time = Time.at($1.to_i)
     price = $2.to_f
+
+    if price == 0
+      raise UserError, "price must not be zero"
+    end
+
     PricePoint.new(time, price)
   end
 
@@ -82,8 +87,8 @@ class StockAnalyzer
 
     # update buy/sell points if selling at this point
     # (and buying at min point) yields better gains
-    if price_point.price - @min_point.price >
-        @sell_point.price - @buy_point.price
+    if price_point.price / @min_point.price >
+        @sell_point.price / @buy_point.price
       @buy_point = @min_point
       @sell_point = price_point
     end

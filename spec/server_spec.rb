@@ -42,44 +42,54 @@ describe 'Server' do
 
     it 'returns the first minimum if appropriate' do
       post '/stock_prices?symbol=OMGSTOCK', <<-END.sub(/\s+/, '')
-        1,2
-        2 , 1 
-        3,3
-        4,0
-        5,1
+        1,12
+        2 , 11 
+        3,13
+        4,10
+        5,11
       END
       expect(last_response.body).to eq('OMGSTOCK,2,3')
     end
 
     it 'returns the second minimum if appropriate' do
       post '/stock_prices?symbol=OMGSTOCK', <<-END.sub(/\s+/, '')
-        1,2
-        2,1
-        3,3
-        4,0
-        5,3
+        1,12
+        2,11
+        3,13
+        4,10
+        5,13
       END
       expect(last_response.body).to eq('OMGSTOCK,4,5')
     end
 
     it 'returns the first maximum if appropriate' do
       post '/stock_prices?symbol=OMGSTOCK', <<-END.sub(/\s+/, '')
-        1,0
-        2,2
-        3,0
-        4,1
+        1,10
+        2,12
+        3,10
+        4,11
       END
       expect(last_response.body).to eq('OMGSTOCK,1,2')
     end
 
     it 'returns the second maximum if appropriate' do
       post '/stock_prices?symbol=OMGSTOCK', <<-END.sub(/\s+/, '')
-        1,0
-        2,2
-        3,0
-        4,3
+        1,10
+        2,12
+        3,10
+        4,13
       END
       expect(last_response.body).to eq('OMGSTOCK,1,4')
+    end
+
+    it 'handles the penny stock case correctly' do
+      post '/stock_prices?symbol=OMGSTOCK', <<-END.sub(/\s+/, '')
+        1,10
+        2,30
+        3,1
+        4,9
+      END
+      expect(last_response.body).to eq('OMGSTOCK,3,4')
     end
   end
 
@@ -122,6 +132,14 @@ describe 'Server' do
       post '/stock_prices?symbol=a,b'
       expect(last_response).to be_bad_request
       expect(last_response.body).to include('invalid stock symbol')
+    end
+
+    it 'errors if price is zero' do
+      post '/stock_prices?symbol=OMGSTOCK', <<-END.sub(/\s+/, '')
+        1,0
+      END
+      expect(last_response).to be_bad_request
+      expect(last_response.body).to include('price must not be zero')
     end
   end
 end
